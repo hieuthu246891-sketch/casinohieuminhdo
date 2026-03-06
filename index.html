@@ -6,28 +6,28 @@
 
 <style>
 body{
-font-family:Arial;
-text-align:center;
 background:#111;
 color:white;
+font-family:Arial;
+text-align:center;
 }
 
 .slot{
 display:grid;
-grid-template-columns:repeat(3,80px);
+grid-template-columns:repeat(3,90px);
 gap:10px;
 justify-content:center;
-margin:20px;
+margin-top:20px;
 }
 
 .cell{
-width:80px;
-height:80px;
+width:90px;
+height:90px;
 background:#222;
-font-size:40px;
 display:flex;
 align-items:center;
 justify-content:center;
+font-size:40px;
 border-radius:10px;
 }
 
@@ -36,7 +36,15 @@ padding:10px;
 margin:5px;
 font-size:16px;
 }
+
+#admin{
+margin-top:30px;
+background:#222;
+padding:10px;
+border-radius:10px;
+}
 </style>
+
 </head>
 
 <body>
@@ -45,8 +53,8 @@ font-size:16px;
 
 <div id="login">
 
-<input id="user" placeholder="username"><br>
-<input id="pass" placeholder="password"><br>
+<input id="username" placeholder="username"><br><br>
+<input id="password" type="password" placeholder="password"><br><br>
 
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
@@ -60,13 +68,13 @@ font-size:16px;
 <h3>Money: <span id="money">0</span></h3>
 
 Bet:
-<button onclick="bet-=100;update()">-</button>
+<button onclick="changeBet(-100)">-</button>
 <span id="bet">100</span>
-<button onclick="bet+=100;update()">+</button>
+<button onclick="changeBet(100)">+</button>
 
 <br><br>
 
-<button onclick="spin()">SPIN</button>
+<button onclick="spin()">🎰 SPIN</button>
 
 <div class="slot">
 
@@ -93,6 +101,8 @@ Bet:
 
 <input id="targetUser" placeholder="username">
 
+<br><br>
+
 <button onclick="addMoney()">+10000</button>
 <button onclick="removeMoney()">-10000</button>
 
@@ -106,7 +116,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-
 apiKey: "AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
 authDomain: "casino-slot-ec289.firebaseapp.com",
 databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -114,7 +123,6 @@ projectId: "casino-slot-ec289",
 storageBucket: "casino-slot-ec289.firebasestorage.app",
 messagingSenderId: "191169506693",
 appId: "1:191169506693:web:18eae48ffff0922492e8ec"
-
 };
 
 const app = initializeApp(firebaseConfig);
@@ -124,38 +132,42 @@ let currentUser="";
 let money=0;
 let bet=100;
 
-const symbols=["♠","♥","♦","♣","A","K","Q","J"];
+const symbols=["🍒","🍋","🍇","⭐","7","💎"];
 
 function updateUI(){
 document.getElementById("money").innerText=money;
 document.getElementById("bet").innerText=bet;
 }
 
-window.update=updateUI;
+window.changeBet=function(v){
+bet+=v;
+if(bet<100) bet=100;
+updateUI();
+}
 
 window.register=async function(){
 
-let u=user.value;
-let p=pass.value;
+let u=username.value;
+let p=password.value;
 
 await set(ref(db,"users/"+u),{
 password:p,
 money:10000
 });
 
-alert("Registered");
+alert("Register success");
 
 }
 
 window.login=async function(){
 
-let u=user.value;
-let p=pass.value;
+let u=username.value;
+let p=password.value;
 
 let snap=await get(ref(db,"users/"+u));
 
 if(!snap.exists()){
-alert("No user");
+alert("User not found");
 return;
 }
 
@@ -169,20 +181,20 @@ return;
 currentUser=u;
 money=data.money;
 
-login.style.display="none";
-game.style.display="block";
+document.getElementById("login").style.display="none";
+document.getElementById("game").style.display="block";
 
-welcome.innerText="Welcome "+u;
+document.getElementById("welcome").innerText="Welcome "+u;
 
 updateUI();
 
 if(u=="hieu10"){
-admin.style.display="block";
+document.getElementById("admin").style.display="block";
 }
 
 }
 
-function rand(){
+function randomSymbol(){
 return symbols[Math.floor(Math.random()*symbols.length)];
 }
 
@@ -199,7 +211,7 @@ let grid=[];
 
 for(let i=0;i<9;i++){
 
-let s=rand();
+let s=randomSymbol();
 
 grid.push(s);
 
@@ -234,7 +246,6 @@ win+=bet*5;
 if(Math.random()<0.01){
 
 win+=bet*50;
-
 alert("💎 JACKPOT!");
 
 }
@@ -251,7 +262,7 @@ let h=document.createElement("div");
 
 h.innerText="Win "+win;
 
-history.prepend(h);
+document.getElementById("history").prepend(h);
 
 }
 
