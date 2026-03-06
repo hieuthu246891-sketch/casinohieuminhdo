@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Casino Slot</title>
+
+<style>
+
+body{
+background:#0a3d2c;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+#grid{
+display:grid;
+grid-template-columns:repeat(3,80px);
+gap:10px;
+justify-content:center;
+margin-top:20px;
+}
+
+.cell{
+width:80px;
+height:80px;
+background:#111;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:30px;
+border-radius:10px;
+}
+
+button{
+padding:10px 20px;
+margin-top:20px;
+font-size:18px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>🎰 Casino Slot</h2>
+
+<input id="username" placeholder="username">
+<button onclick="login()">Login</button>
+
+<h3 id="money">Money: 0</h3>
+
+<div id="grid">
+<div class="cell">A</div>
+<div class="cell">K</div>
+<div class="cell">Q</div>
+
+<div class="cell">J</div>
+<div class="cell">A</div>
+<div class="cell">K</div>
+
+<div class="cell">Q</div>
+<div class="cell">J</div>
+<div class="cell">A</div>
+</div>
+
+<button onclick="spin()">SPIN (-500)</button>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+get,
+set,
+update
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
+authDomain: "casino-slot-ec289.firebaseapp.com",
+databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+projectId: "YOUR_PROJECT"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+let user=""
+let money=0
+
+const symbols=["A","K","Q","J"]
+
+function randomSymbol(){
+
+return symbols[Math.floor(Math.random()*symbols.length)]
+
+}
+
+function draw(grid){
+
+const cells=document.querySelectorAll(".cell")
+
+let i=0
+
+for(let r=0;r<3;r++){
+
+for(let c=0;c<3;c++){
+
+cells[i].innerText=grid[r][c]
+i++
+
+}
+
+}
+
+}
+
+function generateGrid(){
+
+let grid=[]
+
+for(let r=0;r<3;r++){
+
+grid[r]=[]
+
+for(let c=0;c<3;c++){
+
+grid[r][c]=randomSymbol()
+
+}
+
+}
+
+return grid
+
+}
+
+function checkWin(grid){
+
+let reward=0
+
+for(let i=0;i<3;i++){
+
+if(grid[i][0]==grid[i][1] && grid[i][1]==grid[i][2])
+reward+=2000
+
+}
+
+for(let i=0;i<3;i++){
+
+if(grid[0][i]==grid[1][i] && grid[1][i]==grid[2][i])
+reward+=2000
+
+}
+
+return reward
+
+}
+
+async function saveMoney(){
+
+await update(ref(db,"players/"+user),{
+money:money
+})
+
+}
+
+window.login = async function(){
+
+user=document.getElementById("username").value
+
+if(!user) return
+
+let snap=await get(ref(db,"players/"+user))
+
+if(snap.exists()){
+
+money=snap.val().money
+
+}else{
+
+money=10000
+
+await set(ref(db,"players/"+user),{
+money:money
+})
+
+}
+
+updateUI()
+
+}
+
+function updateUI(){
+
+document.getElementById("money").innerText="Money: "+money
+
+}
+
+window.spin = async function(){
+
+if(money<500){
+
+alert("Not enough money")
+
+return
+
+}
+
+money-=500
+
+updateUI()
+
+await saveMoney()
+
+let grid
+
+for(let i=0;i<10;i++){
+
+grid=generateGrid()
+
+draw(grid)
+
+await new Promise(r=>setTimeout(r,100))
+
+}
+
+let reward=checkWin(grid)
+
+if(reward>0){
+
+alert("WIN "+reward)
+
+money+=reward
+
+}
+
+updateUI()
+
+await saveMoney()
+
+}
+
+</script>
+
+</body>
+</html>
