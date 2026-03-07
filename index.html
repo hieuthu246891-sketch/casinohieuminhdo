@@ -5,8 +5,9 @@
 <title>Casino Slot</title>
 
 <style>
+
 body{
-background:#111;
+background:#0a0a0a;
 color:white;
 font-family:Arial;
 text-align:center;
@@ -23,12 +24,22 @@ margin-top:20px;
 .cell{
 width:90px;
 height:90px;
-background:#222;
+background:#1a1a1a;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:40px;
+font-size:35px;
 border-radius:10px;
+}
+
+.spin{
+animation:spin 0.1s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:translateY(-10px)}
+50%{transform:translateY(10px)}
+100%{transform:translateY(-10px)}
 }
 
 button{
@@ -37,12 +48,6 @@ margin:5px;
 font-size:16px;
 }
 
-#admin{
-margin-top:30px;
-background:#222;
-padding:10px;
-border-radius:10px;
-}
 </style>
 
 </head>
@@ -101,8 +106,6 @@ Bet:
 
 <input id="targetUser" placeholder="username">
 
-<br><br>
-
 <button onclick="addMoney()">+10000</button>
 <button onclick="removeMoney()">-10000</button>
 
@@ -116,110 +119,137 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
-authDomain: "casino-slot-ec289.firebaseapp.com",
-databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId: "casino-slot-ec289",
-storageBucket: "casino-slot-ec289.firebasestorage.app",
-messagingSenderId: "191169506693",
-appId: "1:191169506693:web:18eae48ffff0922492e8ec"
+
+apiKey:"AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
+authDomain:"casino-slot-ec289.firebaseapp.com",
+databaseURL:"https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"casino-slot-ec289",
+storageBucket:"casino-slot-ec289.firebasestorage.app",
+messagingSenderId:"191169506693",
+appId:"1:191169506693:web:18eae48ffff0922492e8ec"
+
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-let currentUser="";
-let money=0;
-let bet=100;
+let currentUser=""
+let money=0
+let bet=100
 
-const symbols=["🍒","🍋","🍇","⭐","7","💎"];
+const cards=["A","K","Q","J","10","9","♠","♥","♦","♣"]
 
-function updateUI(){
-document.getElementById("money").innerText=money;
-document.getElementById("bet").innerText=bet;
+function randomCard(){
+return cards[Math.floor(Math.random()*cards.length)]
 }
 
+function updateUI(){
+moneyText.innerText=money
+betText.innerText=bet
+}
+
+const moneyText=document.getElementById("money")
+const betText=document.getElementById("bet")
+
 window.changeBet=function(v){
-bet+=v;
-if(bet<100) bet=100;
-updateUI();
+bet+=v
+if(bet<100) bet=100
+updateUI()
 }
 
 window.register=async function(){
 
-let u=username.value;
-let p=password.value;
+let u=username.value
+let p=password.value
 
 await set(ref(db,"users/"+u),{
 password:p,
 money:10000
-});
+})
 
-alert("Register success");
+alert("Register success")
 
 }
 
 window.login=async function(){
 
-let u=username.value;
-let p=password.value;
+let u=username.value
+let p=password.value
 
-let snap=await get(ref(db,"users/"+u));
+let snap=await get(ref(db,"users/"+u))
 
 if(!snap.exists()){
-alert("User not found");
-return;
+alert("User not found")
+return
 }
 
-let data=snap.val();
+let data=snap.val()
 
 if(data.password!=p){
-alert("Wrong password");
-return;
+alert("Wrong password")
+return
 }
 
-currentUser=u;
-money=data.money;
+currentUser=u
+money=data.money
 
-document.getElementById("login").style.display="none";
-document.getElementById("game").style.display="block";
+login.style.display="none"
+game.style.display="block"
 
-document.getElementById("welcome").innerText="Welcome "+u;
+welcome.innerText="Welcome "+u
 
-updateUI();
+updateUI()
 
 if(u=="hieu10"){
-document.getElementById("admin").style.display="block";
+admin.style.display="block"
 }
 
 }
 
-function randomSymbol(){
-return symbols[Math.floor(Math.random()*symbols.length)];
+function animateSpin(){
+
+for(let i=0;i<9;i++){
+document.getElementById("s"+i).classList.add("spin")
+}
+
+}
+
+function stopSpin(){
+
+for(let i=0;i<9;i++){
+document.getElementById("s"+i).classList.remove("spin")
+}
+
 }
 
 window.spin=function(){
 
 if(money<bet){
-alert("Not enough money");
-return;
+alert("Not enough money")
+return
 }
 
-money-=bet;
+money-=bet
 
-let grid=[];
+animateSpin()
+
+setTimeout(()=>{
+
+let grid=[]
 
 for(let i=0;i<9;i++){
 
-let s=randomSymbol();
+let c=randomCard()
 
-grid.push(s);
+grid.push(c)
 
-document.getElementById("s"+i).innerText=s;
+document.getElementById("s"+i).innerText=c
 
 }
 
-let win=0;
+stopSpin()
+
+let win=0
 
 let lines=[
 
@@ -231,70 +261,71 @@ let lines=[
 [1,4,7],
 [2,5,8]
 
-];
+]
 
 for(let l of lines){
 
 if(grid[l[0]]==grid[l[1]] && grid[l[1]]==grid[l[2]]){
 
-win+=bet*5;
+win+=bet*5
 
 }
 
 }
 
-if(Math.random()<0.01){
+if(Math.random()<0.02){
 
-win+=bet*50;
-alert("💎 JACKPOT!");
+win+=bet*50
+alert("💎 JACKPOT!")
 
 }
 
-money+=win;
+money+=win
 
 update(ref(db,"users/"+currentUser),{
 money:money
-});
+})
 
-updateUI();
+updateUI()
 
-let h=document.createElement("div");
+let h=document.createElement("div")
+h.innerText="Win "+win
 
-h.innerText="Win "+win;
+history.prepend(h)
 
-document.getElementById("history").prepend(h);
+},1000)
 
 }
 
 window.addMoney=async function(){
 
-let u=targetUser.value;
+let u=targetUser.value
 
-let snap=await get(ref(db,"users/"+u));
+let snap=await get(ref(db,"users/"+u))
 
-let m=snap.val().money+10000;
+let m=snap.val().money+10000
 
 update(ref(db,"users/"+u),{
 money:m
-});
+})
 
-alert("Added");
+alert("Added")
 
 }
 
 window.removeMoney=async function(){
 
-let u=targetUser.value;
+let u=targetUser.value
 
-let snap=await get(ref(db,"users/"+u));
+let snap=await get(ref(db,"users/"+u))
 
-let m=snap.val().money-10000;
+let m=snap.val().money-10000
 
 update(ref(db,"users/"+u),{
 money:m
-});
+})
 
-alert("Removed");
+alert("Removed")
 
 }
 
