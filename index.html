@@ -1,65 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <title>Casino Slot</title>
 
 <style>
 
 body{
-background:#0a0a0a;
+background:#0b0b0b;
 color:white;
 font-family:Arial;
 text-align:center;
 }
 
-.slot{
-display:grid;
-grid-template-columns:repeat(3,90px);
-gap:10px;
-justify-content:center;
-margin-top:20px;
+input,button{
+padding:10px;
+font-size:18px;
+margin:5px;
 }
 
-.cell{
+.reel{
+display:inline-block;
 width:90px;
 height:90px;
-background:#1a1a1a;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:35px;
-border-radius:10px;
-}
-
-button{
-padding:10px;
+line-height:90px;
+font-size:60px;
+border:2px solid white;
 margin:5px;
-font-size:16px;
+overflow:hidden;
 }
 
 .spin{
-animation:spin 0.1s linear infinite;
+animation:spin 0.3s linear infinite;
 }
 
 @keyframes spin{
-0%{transform:translateY(-10px)}
-50%{transform:translateY(10px)}
-100%{transform:translateY(-10px)}
+0%{transform:translateY(-20px)}
+50%{transform:translateY(20px)}
+100%{transform:translateY(-20px)}
+}
+
+#history{
+margin-top:20px;
+width:300px;
+margin-left:auto;
+margin-right:auto;
+text-align:left;
+background:#111;
+padding:10px;
+height:200px;
+overflow:auto;
+border:1px solid white;
 }
 
 </style>
 
 </head>
-
 <body>
 
-<h1>🎰 CASINO SLOT 🎰</h1>
+<h1>🎰 Casino Slot</h1>
 
 <div id="login">
 
-<input id="username" placeholder="username"><br><br>
-<input id="password" type="password" placeholder="password"><br><br>
+<input id="email" placeholder="Email"><br>
+<input id="password" type="password" placeholder="Password"><br>
 
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
@@ -68,36 +71,25 @@ animation:spin 0.1s linear infinite;
 
 <div id="game" style="display:none">
 
-<h2 id="welcome"></h2>
-
-<h3>Money: <span id="money">0</span></h3>
+<h2 id="money">Money: 1000</h2>
 
 Bet:
-<button onclick="changeBet(-100)">-</button>
-<span id="bet">100</span>
-<button onclick="changeBet(100)">+</button>
+<input id="bet" type="number" value="100" min="10" step="10">
 
 <br><br>
 
-<button onclick="spin()">SPIN</button>
+<div>
 
-<div class="slot">
-
-<div class="cell" id="s0"></div>
-<div class="cell" id="s1"></div>
-<div class="cell" id="s2"></div>
-
-<div class="cell" id="s3"></div>
-<div class="cell" id="s4"></div>
-<div class="cell" id="s5"></div>
-
-<div class="cell" id="s6"></div>
-<div class="cell" id="s7"></div>
-<div class="cell" id="s8"></div>
+<div class="reel" id="r1">🂡</div>
+<div class="reel" id="r2">🂱</div>
+<div class="reel" id="r3">🃁</div>
 
 </div>
 
-<h3>History</h3>
+<br>
+
+<button onclick="spin()">🎰 SPIN</button>
+
 <div id="history"></div>
 
 </div>
@@ -105,150 +97,164 @@ Bet:
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getDatabase,
+ref,
+set,
+get
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 const firebaseConfig = {
 
-apiKey:"AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
-authDomain:"casino-slot-ec289.firebaseapp.com",
-databaseURL:"https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"casino-slot-ec289",
-storageBucket:"casino-slot-ec289.firebasestorage.app",
-messagingSenderId:"191169506693",
-appId:"1:191169506693:web:18eae48ffff0922492e8ec"
+apiKey:"APIKEY",
+authDomain:"YOUR.firebaseapp.com",
+databaseURL:"https://YOUR-default-rtdb.firebaseio.com",
+projectId:"YOUR",
+storageBucket:"YOUR.appspot.com",
+messagingSenderId:"123",
+appId:"123"
 
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getDatabase(app);
 
-let currentUser=""
-let money=0
-let bet=100
+let uid;
+let money=1000;
 
-const cards=["A","K","Q","J","10","9","♠","♥","♦","♣"]
+const cards=["🂡","🂱","🃁","🃑","🂮","🂭","🂫","🂪"];
 
-function randomCard(){
-return cards[Math.floor(Math.random()*cards.length)]
+function addHistory(text){
+
+let h=document.getElementById("history");
+
+h.innerHTML="<div>"+text+"</div>"+h.innerHTML;
+
 }
 
-function updateUI(){
-document.getElementById("money").innerText=money
-document.getElementById("bet").innerText=bet
+window.register=()=>{
+
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
+
+createUserWithEmailAndPassword(auth,email,pass)
+
+.then(user=>{
+
+set(ref(db,"users/"+user.user.uid),{
+money:1000
+});
+
+alert("Register success");
+
+});
+
 }
 
-window.changeBet=function(v){
-bet+=v
-if(bet<100) bet=100
-updateUI()
-}
+window.login=()=>{
 
-window.register=async function(){
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
 
-let u=document.getElementById("username").value
-let p=document.getElementById("password").value
+signInWithEmailAndPassword(auth,email,pass)
 
-await set(ref(db,"users/"+u),{
-password:p,
-money:10000
+.then(async user=>{
+
+uid=user.user.uid;
+
+document.getElementById("login").style.display="none";
+document.getElementById("game").style.display="block";
+
+let data=await get(ref(db,"users/"+uid));
+
+money=data.val().money;
+
+document.getElementById("money").innerText="Money: "+money;
+
 })
 
-alert("Register success")
+}
+
+window.spin=()=>{
+
+let bet=parseInt(document.getElementById("bet").value);
+
+if(bet>money){
+
+alert("Not enough money");
+
+return;
 
 }
 
-window.login=async function(){
+money-=bet;
 
-let u=document.getElementById("username").value
-let p=document.getElementById("password").value
+document.getElementById("money").innerText="Money: "+money;
 
-let snap = await get(ref(db,"users/"+u))
+let r1=document.getElementById("r1");
+let r2=document.getElementById("r2");
+let r3=document.getElementById("r3");
 
-if(!snap.exists()){
-alert("User not found")
-return
-}
+r1.classList.add("spin");
+r2.classList.add("spin");
+r3.classList.add("spin");
 
-let data=snap.val()
+setTimeout(()=>{
 
-if(data.password!=p){
-alert("Wrong password")
-return
-}
+r1.classList.remove("spin");
+r2.classList.remove("spin");
+r3.classList.remove("spin");
 
-currentUser=u
-money=data.money
+let c1=cards[Math.floor(Math.random()*cards.length)];
+let c2=cards[Math.floor(Math.random()*cards.length)];
+let c3=cards[Math.floor(Math.random()*cards.length)];
 
-document.getElementById("login").style.display="none"
-document.getElementById("game").style.display="block"
+r1.innerText=c1;
+r2.innerText=c2;
+r3.innerText=c3;
 
-document.getElementById("welcome").innerText="Welcome "+u
+if(c1==c2 && c2==c3){
 
-updateUI()
+let win=bet*20;
 
-}
+money+=win;
 
-window.spin=function(){
+addHistory("👑 JACKPOT +"+win);
 
-if(money<bet){
-alert("Not enough money")
-return
-}
-
-money-=bet
-
-let grid=[]
-
-for(let i=0;i<9;i++){
-
-let c=randomCard()
-
-grid.push(c)
-
-document.getElementById("s"+i).innerText=c
+alert("JACKPOT x20");
 
 }
 
-let win=0
+else if(c1==c2 || c2==c3 || c1==c3){
 
-let lines=[
-[0,1,2],
-[3,4,5],
-[6,7,8],
-[0,3,6],
-[1,4,7],
-[2,5,8]
-]
+let win=bet*10;
 
-for(let l of lines){
+money+=win;
 
-if(grid[l[0]]==grid[l[1]] && grid[l[1]]==grid[l[2]]){
-
-win+=bet*5
+addHistory("💰 WIN +"+win);
 
 }
 
-}
+else{
 
-if(Math.random()<0.02){
-
-win+=bet*50
-alert("JACKPOT!")
+addHistory("❌ Lose -"+bet);
 
 }
 
-money+=win
+document.getElementById("money").innerText="Money: "+money;
 
-update(ref(db,"users/"+currentUser),{
-money:money
-})
+set(ref(db,"users/"+uid+"/money"),money);
 
-updateUI()
-
-let h=document.createElement("div")
-h.innerText="Win "+win
-
-document.getElementById("history").prepend(h)
+},1500);
 
 }
 
