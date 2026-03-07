@@ -32,6 +32,12 @@ font-size:35px;
 border-radius:10px;
 }
 
+button{
+padding:10px;
+margin:5px;
+font-size:16px;
+}
+
 .spin{
 animation:spin 0.1s linear infinite;
 }
@@ -40,12 +46,6 @@ animation:spin 0.1s linear infinite;
 0%{transform:translateY(-10px)}
 50%{transform:translateY(10px)}
 100%{transform:translateY(-10px)}
-}
-
-button{
-padding:10px;
-margin:5px;
-font-size:16px;
 }
 
 </style>
@@ -79,7 +79,7 @@ Bet:
 
 <br><br>
 
-<button onclick="spin()">🎰 SPIN</button>
+<button onclick="spin()">SPIN</button>
 
 <div class="slot">
 
@@ -100,17 +100,6 @@ Bet:
 <h3>History</h3>
 <div id="history"></div>
 
-<div id="admin" style="display:none">
-
-<h3>ADMIN PANEL</h3>
-
-<input id="targetUser" placeholder="username">
-
-<button onclick="addMoney()">+10000</button>
-<button onclick="removeMoney()">-10000</button>
-
-</div>
-
 </div>
 
 <script type="module">
@@ -130,8 +119,8 @@ appId:"1:191169506693:web:18eae48ffff0922492e8ec"
 
 };
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 let currentUser=""
 let money=0
@@ -144,12 +133,9 @@ return cards[Math.floor(Math.random()*cards.length)]
 }
 
 function updateUI(){
-moneyText.innerText=money
-betText.innerText=bet
+document.getElementById("money").innerText=money
+document.getElementById("bet").innerText=bet
 }
-
-const moneyText=document.getElementById("money")
-const betText=document.getElementById("bet")
 
 window.changeBet=function(v){
 bet+=v
@@ -159,8 +145,8 @@ updateUI()
 
 window.register=async function(){
 
-let u=username.value
-let p=password.value
+let u=document.getElementById("username").value
+let p=document.getElementById("password").value
 
 await set(ref(db,"users/"+u),{
 password:p,
@@ -173,10 +159,10 @@ alert("Register success")
 
 window.login=async function(){
 
-let u=username.value
-let p=password.value
+let u=document.getElementById("username").value
+let p=document.getElementById("password").value
 
-let snap=await get(ref(db,"users/"+u))
+let snap = await get(ref(db,"users/"+u))
 
 if(!snap.exists()){
 alert("User not found")
@@ -193,32 +179,12 @@ return
 currentUser=u
 money=data.money
 
-login.style.display="none"
-game.style.display="block"
+document.getElementById("login").style.display="none"
+document.getElementById("game").style.display="block"
 
-welcome.innerText="Welcome "+u
+document.getElementById("welcome").innerText="Welcome "+u
 
 updateUI()
-
-if(u=="hieu10"){
-admin.style.display="block"
-}
-
-}
-
-function animateSpin(){
-
-for(let i=0;i<9;i++){
-document.getElementById("s"+i).classList.add("spin")
-}
-
-}
-
-function stopSpin(){
-
-for(let i=0;i<9;i++){
-document.getElementById("s"+i).classList.remove("spin")
-}
 
 }
 
@@ -230,10 +196,6 @@ return
 }
 
 money-=bet
-
-animateSpin()
-
-setTimeout(()=>{
 
 let grid=[]
 
@@ -247,20 +209,15 @@ document.getElementById("s"+i).innerText=c
 
 }
 
-stopSpin()
-
 let win=0
 
 let lines=[
-
 [0,1,2],
 [3,4,5],
 [6,7,8],
-
 [0,3,6],
 [1,4,7],
 [2,5,8]
-
 ]
 
 for(let l of lines){
@@ -276,7 +233,7 @@ win+=bet*5
 if(Math.random()<0.02){
 
 win+=bet*50
-alert("💎 JACKPOT!")
+alert("JACKPOT!")
 
 }
 
@@ -291,41 +248,7 @@ updateUI()
 let h=document.createElement("div")
 h.innerText="Win "+win
 
-history.prepend(h)
-
-},1000)
-
-}
-
-window.addMoney=async function(){
-
-let u=targetUser.value
-
-let snap=await get(ref(db,"users/"+u))
-
-let m=snap.val().money+10000
-
-update(ref(db,"users/"+u),{
-money:m
-})
-
-alert("Added")
-
-}
-
-window.removeMoney=async function(){
-
-let u=targetUser.value
-
-let snap=await get(ref(db,"users/"+u))
-
-let m=snap.val().money-10000
-
-update(ref(db,"users/"+u),{
-money:m
-})
-
-alert("Removed")
+document.getElementById("history").prepend(h)
 
 }
 
