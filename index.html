@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Casino Slot</title>
 
 <style>
@@ -26,7 +27,6 @@ line-height:90px;
 font-size:60px;
 border:2px solid white;
 margin:5px;
-overflow:hidden;
 }
 
 .spin{
@@ -41,15 +41,15 @@ animation:spin 0.3s linear infinite;
 
 #history{
 margin-top:20px;
-width:300px;
+width:320px;
 margin-left:auto;
 margin-right:auto;
-text-align:left;
 background:#111;
 padding:10px;
 height:200px;
 overflow:auto;
 border:1px solid white;
+text-align:left;
 }
 
 </style>
@@ -71,7 +71,7 @@ border:1px solid white;
 
 <div id="game" style="display:none">
 
-<h2 id="money">Money: 1000</h2>
+<h2 id="money">Money: 0</h2>
 
 Bet:
 <input id="bet" type="number" value="100" min="10" step="10">
@@ -114,29 +114,29 @@ get
 
 const firebaseConfig = {
 
-apiKey:"AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
-authDomain:"casino-slot-ec289.firebaseapp.com",
-databaseURL:"https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"casino-slot-ec289",
-storageBucket:"casino-slot-ec289.firebasestorage.app",
-messagingSenderId:"191169506693",
-appId:1:191169506693:web:18eae48ffff0922492e8ec
+apiKey: "AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
+authDomain: "casino-slot-ec289.firebaseapp.com",
+databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId: "casino-slot-ec289",
+storageBucket: "casino-slot-ec289.firebasestorage.app",
+messagingSenderId: "191169506693",
+appId: "1:191169506693:web:18eae48ffff0922492e8ec",
+measurementId: "G-V7RM6KZXVW"
 
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
 let uid;
-let money=1000;
+let money=0;
 
 const cards=["🂡","🂱","🃁","🃑","🂮","🂭","🂫","🂪"];
 
 function addHistory(text){
 
 let h=document.getElementById("history");
-
 h.innerHTML="<div>"+text+"</div>"+h.innerHTML;
 
 }
@@ -158,7 +158,7 @@ alert("Register success");
 
 });
 
-}
+};
 
 window.login=()=>{
 
@@ -182,7 +182,9 @@ document.getElementById("money").innerText="Money: "+money;
 
 })
 
-}
+.catch(()=>alert("Login fail"));
+
+};
 
 window.spin=()=>{
 
@@ -256,7 +258,7 @@ set(ref(db,"users/"+uid+"/money"),money);
 
 },1500);
 
-}
+};
 
 </script>
 
