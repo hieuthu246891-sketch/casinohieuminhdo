@@ -1,59 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
-<title>Casino Slot</title>
+<title>Casino Card Slot</title>
 
 <style>
 
 body{
 background:#111;
 color:white;
-font-family:Arial;
 text-align:center;
+font-family:Arial;
 }
 
-input,button{
-padding:8px;
+input{
+padding:10px;
 margin:5px;
-font-size:16px;
 }
 
-#grid{
+button{
+padding:10px 20px;
+margin:10px;
+cursor:pointer;
+}
+
+#game{
+display:none;
+}
+
+.slot{
+
 display:grid;
-grid-template-columns:repeat(3,80px);
+grid-template-columns:repeat(3,100px);
 grid-gap:10px;
 justify-content:center;
-margin:20px;
+margin-top:30px;
+
 }
 
 .cell{
-width:80px;
-height:80px;
-font-size:50px;
-border:2px solid white;
+
+width:100px;
+height:100px;
+background:#222;
+border:2px solid gold;
+font-size:35px;
+
 display:flex;
 align-items:center;
 justify-content:center;
+
 }
 
-.spin{
-animation:spin 0.3s linear infinite;
+.spinning{
+
+animation:spin 0.1s linear infinite;
+
 }
 
 @keyframes spin{
-0%{transform:translateY(-20px)}
-50%{transform:translateY(20px)}
-100%{transform:translateY(-20px)}
-}
 
-#history{
-width:300px;
-height:150px;
-overflow:auto;
-background:#222;
-margin:auto;
-padding:10px;
+0%{transform:translateY(-5px);}
+50%{transform:translateY(5px);}
+100%{transform:translateY(-5px);}
+
 }
 
 </style>
@@ -62,28 +73,31 @@ padding:10px;
 
 <body>
 
-<h1>🎰 Casino Slot</h1>
+<h1>🎰 CARD SLOT</h1>
 
 <div id="login">
 
-<input id="email" placeholder="Email"><br>
-<input id="password" type="password" placeholder="Password"><br>
+<input id="email" placeholder="email">
+
+<br>
+
+<input id="password" type="password" placeholder="password">
+
+<br>
 
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 
+<p id="msg"></p>
+
 </div>
 
-<div id="game" style="display:none">
 
-<h2 id="money">Money: 0</h2>
+<div id="game">
 
-Bet
-<input id="bet" type="number" value="100">
+<p>UID: <span id="uid"></span></p>
 
-<br>
-
-<div id="grid">
+<div class="slot">
 
 <div class="cell" id="c0"></div>
 <div class="cell" id="c1"></div>
@@ -101,41 +115,20 @@ Bet
 
 <button onclick="spin()">SPIN</button>
 
-<h3>History</h3>
-
-<div id="history"></div>
-
-<div id="admin" style="display:none">
-
-<h2>ADMIN PANEL</h2>
-
-<input id="uid" placeholder="User UID">
-
-<input id="addmoney" placeholder="Money">
-
-<button onclick="addMoney()">Add Money</button>
-
 </div>
 
-</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 import {
 getAuth,
 createUserWithEmailAndPassword,
-signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+signInWithEmailAndPassword,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import {
-getDatabase,
-ref,
-set,
-get,
-update
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
 const firebaseConfig = {
@@ -146,264 +139,170 @@ databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedat
 projectId: "casino-slot-ec289",
 storageBucket: "casino-slot-ec289.firebasestorage.app",
 messagingSenderId: "191169506693",
-appId: "1:191169506693:web:18eae48ffff0922492e8ec"
+appId: "1:191169506693:web:18eae48ffff0922492e8ec",
+measurementId: "G-V7RM6KZXVW"
 
 };
+
 
 const app=initializeApp(firebaseConfig);
 
 const auth=getAuth(app);
 
-const db=getDatabase(app);
 
-let uid;
 
-let money=0;
+const symbols=[
 
-const cards=["🂡","🂱","🃁","🃑","🂮","🂭","🂫","🂪"];
+"A♠","K♠","Q♠","J♠",
+"A♥","K♥","Q♥","J♥",
+"A♦","K♦","Q♦","J♦",
+"A♣","K♣","Q♣","J♣"
 
-function history(t){
+];
 
-let h=document.getElementById("history");
 
-h.innerHTML="<div>"+t+"</div>"+h.innerHTML;
+function rand(){
+
+return symbols[Math.floor(Math.random()*symbols.length)];
 
 }
 
-window.register=()=>{
 
-let email=emailInput();
+function fill(){
 
-let pass=passwordInput();
+for(let i=0;i<9;i++){
+
+document.getElementById("c"+i).innerText=rand();
+
+}
+
+}
+
+
+
+window.register=function(){
+
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
 
 createUserWithEmailAndPassword(auth,email,pass)
 
-.then(user=>{
+.then(()=>{
 
-set(ref(db,"users/"+user.user.uid),{
-
-money:1000
-
-});
-
-alert("Register success");
+document.getElementById("msg").innerText="Register success";
 
 })
 
-.catch(e=>alert(e.message));
+.catch(e=>{
+
+document.getElementById("msg").innerText=e.message;
+
+})
 
 }
 
-window.login=()=>{
 
-let email=emailInput();
 
-let pass=passwordInput();
+window.login=function(){
+
+let email=document.getElementById("email").value;
+let pass=document.getElementById("password").value;
 
 signInWithEmailAndPassword(auth,email,pass)
 
-.then(async user=>{
+.then(()=>{
 
-uid=user.user.uid;
+document.getElementById("msg").innerText="Login success";
+
+})
+
+.catch(()=>{
+
+document.getElementById("msg").innerText="Login fail";
+
+})
+
+}
+
+
+
+onAuthStateChanged(auth,user=>{
+
+if(user){
 
 document.getElementById("login").style.display="none";
 
 document.getElementById("game").style.display="block";
 
-let data=await get(ref(db,"users/"+uid));
+document.getElementById("uid").innerText=user.uid;
 
-money=data.val().money;
-
-document.getElementById("money").innerText =
-"Money: "+money+" | UID: "+uid;
-
-if(email=="admin@casino.com"){
-
-document.getElementById("admin").style.display="block";
+fill();
 
 }
 
 })
 
-.catch(e=>alert(e.message));
 
-}
 
-function emailInput(){
+function spinColumn(col){
 
-return document.getElementById("email").value;
+return new Promise(resolve=>{
 
-}
+let ids=[col,col+3,col+6];
 
-function passwordInput(){
+ids.forEach(i=>{
 
-return document.getElementById("password").value;
-
-}
-
-window.spin=()=>{
-
-let bet=parseInt(document.getElementById("bet").value);
-
-if(bet>money){
-alert("Not enough money");
-return;
-}
-
-money-=bet;
-
-let result=[];
-
-/* quay cột 1 */
-
-let spin1=setInterval(()=>{
-
-for(let i of [0,3,6]){
-
-let c=cards[Math.floor(Math.random()*cards.length)];
-document.getElementById("c"+i).innerText=c;
-
-}
-
-},80);
-
-setTimeout(()=>{
-
-clearInterval(spin1);
-
-/* quay cột 2 */
-
-let spin2=setInterval(()=>{
-
-for(let i of [1,4,7]){
-
-let c=cards[Math.floor(Math.random()*cards.length)];
-document.getElementById("c"+i).innerText=c;
-
-}
-
-},80);
-
-setTimeout(()=>{
-
-clearInterval(spin2);
-
-/* quay cột 3 */
-
-let spin3=setInterval(()=>{
-
-for(let i of [2,5,8]){
-
-let c=cards[Math.floor(Math.random()*cards.length)];
-document.getElementById("c"+i).innerText=c;
-
-}
-
-},80);
-
-setTimeout(()=>{
-
-clearInterval(spin3);
-
-/* lấy kết quả */
-
-for(let i=0;i<9;i++){
-result.push(document.getElementById("c"+i).innerText);
-}
-
-checkWin(result,bet);
-
-document.getElementById("money").innerText="Money: "+money;
-
-set(ref(db,"users/"+uid+"/money"),money);
-
-},1000);
-
-},700);
-
-},700);
-
-}
-
-setTimeout(()=>{
-
-for(let i=0;i<9;i++){
-
-let c=cards[Math.floor(Math.random()*cards.length)];
-
-document.getElementById("c"+i).innerText=c;
-
-document.getElementById("c"+i).classList.remove("spin");
-
-result.push(c);
-
-}
-
-checkWin(result,bet);
-
-document.getElementById("money").innerText="Money: "+money;
-
-set(ref(db,"users/"+uid+"/money"),money);
-
-},1200);
-
-}
-
-function checkWin(r,bet){
-
-let win=0;
-
-if(r[0]==r[1]&&r[1]==r[2])win+=bet*10;
-if(r[3]==r[4]&&r[4]==r[5])win+=bet*10;
-if(r[6]==r[7]&&r[7]==r[8])win+=bet*10;
-
-if(r[0]==r[3]&&r[3]==r[6])win+=bet*10;
-if(r[1]==r[4]&&r[4]==r[7])win+=bet*10;
-if(r[2]==r[5]&&r[5]==r[8])win+=bet*10;
-
-if(win>=bet*30){
-
-win=bet*20;
-
-history("👑 JACKPOT +"+win);
-
-}
-
-else if(win>0){
-
-history("💰 WIN +"+win);
-
-}
-
-else{
-
-history("❌ Lose -"+bet);
-
-}
-
-money+=win;
-
-}
-
-window.addMoney=async()=>{
-
-let id=document.getElementById("uid").value;
-
-let add=parseInt(document.getElementById("addmoney").value);
-
-let data=await get(ref(db,"users/"+id));
-
-let m=data.val().money+add;
-
-update(ref(db,"users/"+id),{
-
-money:m
+document.getElementById("c"+i).classList.add("spinning");
 
 });
 
-alert("Added");
+
+let count=0;
+
+let t=setInterval(()=>{
+
+
+ids.forEach(i=>{
+
+document.getElementById("c"+i).innerText=rand();
+
+});
+
+
+count++;
+
+if(count>15){
+
+clearInterval(t);
+
+ids.forEach(i=>{
+
+document.getElementById("c"+i).classList.remove("spinning");
+
+});
+
+resolve();
 
 }
+
+},80);
+
+});
+
+}
+
+
+
+window.spin=async function(){
+
+await spinColumn(0);
+
+await spinColumn(1);
+
+await spinColumn(2);
+
+}
+
 
 </script>
 
