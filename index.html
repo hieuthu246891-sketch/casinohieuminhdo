@@ -1,86 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
-<title>Casino Card Slot</title>
+<title>Casino Slot</title>
 
 <style>
 
 body{
-background:#111;
+background:#0b0b0b;
 color:white;
-text-align:center;
 font-family:Arial;
+text-align:center;
 }
 
-input{
-padding:10px;
+input,button{
+padding:8px;
 margin:5px;
+font-size:16px;
 }
 
-button{
-padding:10px 20px;
-margin:10px;
-cursor:pointer;
-}
-
-#game{
-display:none;
-}
-
-.slot{
-
+#slot{
 display:grid;
 grid-template-columns:repeat(3,100px);
 grid-gap:10px;
 justify-content:center;
-margin-top:30px;
-
+margin-top:20px;
 }
 
 .cell{
-
 width:100px;
 height:100px;
-background:#222;
+background:#111;
 border:2px solid gold;
-font-size:35px;
-
 display:flex;
 align-items:center;
 justify-content:center;
-
+font-size:30px;
 }
 
-.spinning{
-
-animation:spin 0.1s linear infinite;
-
+.reelSpin{
+animation:spin 0.2s linear infinite;
 }
 
 @keyframes spin{
+0%{transform:translateY(-10px)}
+50%{transform:translateY(10px)}
+100%{transform:translateY(-10px)}
+}
 
-0%{transform:translateY(-5px);}
-50%{transform:translateY(5px);}
-100%{transform:translateY(-5px);}
+#info{
+margin-top:20px;
+}
 
+table{
+margin:auto;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+td,th{
+border:1px solid white;
+padding:6px 12px;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h1>🎰 CARD SLOT</h1>
+<h1>🎰 CASINO SLOT</h1>
 
-<div id="login">
+<div id="auth">
 
 <input id="email" placeholder="email">
-
-<br>
-
 <input id="password" type="password" placeholder="password">
 
 <br>
@@ -88,16 +80,26 @@ animation:spin 0.1s linear infinite;
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 
-<p id="msg"></p>
+</div>
+
+<div id="game" style="display:none">
+
+<h3>UID: <span id="uid"></span></h3>
+
+<div id="info">
+
+Money: $<span id="money">1000</span>  
+Jackpot: $<span id="jackpot">1000</span>
+
+<br><br>
+
+Bet: <input id="bet" value="10" style="width:80px">
+
+<button onclick="spin()">SPIN</button>
 
 </div>
 
-
-<div id="game">
-
-<p>UID: <span id="uid"></span></p>
-
-<div class="slot">
+<div id="slot">
 
 <div class="cell" id="c0"></div>
 <div class="cell" id="c1"></div>
@@ -113,26 +115,34 @@ animation:spin 0.1s linear infinite;
 
 </div>
 
-<button onclick="spin()">SPIN</button>
+<table>
+
+<tr>
+<th>Type</th>
+<th>Reward</th>
+</tr>
+
+<tr>
+<td>3 giống nhau</td>
+<td>x5</td>
+</tr>
+
+<tr>
+<td>AAA</td>
+<td>Jackpot x20</td>
+</tr>
+
+</table>
 
 </div>
 
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-
-import {
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
-
 apiKey: "AIzaSyA3jfkHd8_FN2M-FBGoIWIz8ZuIYwb-v0c",
 authDomain: "casino-slot-ec289.firebaseapp.com",
 databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -141,168 +151,161 @@ storageBucket: "casino-slot-ec289.firebasestorage.app",
 messagingSenderId: "191169506693",
 appId: "1:191169506693:web:18eae48ffff0922492e8ec",
 measurementId: "G-V7RM6KZXVW"
-
 };
 
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-const app=initializeApp(firebaseConfig);
+window.register=()=>{
+createUserWithEmailAndPassword(
+auth,
+email.value,
+password.value
+).then(()=>{
+alert("Register success")
+})
+.catch(e=>alert(e.message))
+}
 
-const auth=getAuth(app);
+window.login=()=>{
+signInWithEmailAndPassword(
+auth,
+email.value,
+password.value
+).then(user=>{
 
+document.getElementById("auth").style.display="none"
+document.getElementById("game").style.display="block"
 
+document.getElementById("uid").innerText=user.user.uid
+
+})
+.catch(e=>alert(e.message))
+}
+
+let money=1000
+let jackpot=1000
 
 const symbols=[
+"A♠","K♠","Q♠",
+"A♥","K♥","Q♥",
+"A♦","K♦","Q♦",
+"A♣","K♣","Q♣"
+]
 
-"A♠","K♠","Q♠","J♠",
-"A♥","K♥","Q♥","J♥",
-"A♦","K♦","Q♦","J♦",
-"A♣","K♣","Q♣","J♣"
+let grid=new Array(9)
 
-];
-
-
-function rand(){
-
-return symbols[Math.floor(Math.random()*symbols.length)];
-
+function randomSymbol(){
+return symbols[Math.floor(Math.random()*symbols.length)]
 }
 
-
-function fill(){
-
+function draw(){
 for(let i=0;i<9;i++){
-
-document.getElementById("c"+i).innerText=rand();
-
+document.getElementById("c"+i).innerText=grid[i]
 }
-
 }
-
-
-
-window.register=function(){
-
-let email=document.getElementById("email").value;
-let pass=document.getElementById("password").value;
-
-createUserWithEmailAndPassword(auth,email,pass)
-
-.then(()=>{
-
-document.getElementById("msg").innerText="Register success";
-
-})
-
-.catch(e=>{
-
-document.getElementById("msg").innerText=e.message;
-
-})
-
-}
-
-
-
-window.login=function(){
-
-let email=document.getElementById("email").value;
-let pass=document.getElementById("password").value;
-
-signInWithEmailAndPassword(auth,email,pass)
-
-.then(()=>{
-
-document.getElementById("msg").innerText="Login success";
-
-})
-
-.catch(()=>{
-
-document.getElementById("msg").innerText="Login fail";
-
-})
-
-}
-
-
-
-onAuthStateChanged(auth,user=>{
-
-if(user){
-
-document.getElementById("login").style.display="none";
-
-document.getElementById("game").style.display="block";
-
-document.getElementById("uid").innerText=user.uid;
-
-fill();
-
-}
-
-})
-
-
 
 function spinColumn(col){
 
 return new Promise(resolve=>{
 
-let ids=[col,col+3,col+6];
+let spins=10
 
-ids.forEach(i=>{
+let interval=setInterval(()=>{
 
-document.getElementById("c"+i).classList.add("spinning");
+for(let r=0;r<3;r++){
+grid[r*3+col]=randomSymbol()
+}
 
-});
+draw()
 
+spins--
 
-let count=0;
+if(spins<=0){
 
-let t=setInterval(()=>{
+clearInterval(interval)
 
+for(let r=0;r<3;r++){
+grid[r*3+col]=randomSymbol()
+}
 
-ids.forEach(i=>{
+draw()
 
-document.getElementById("c"+i).innerText=rand();
-
-});
-
-
-count++;
-
-if(count>15){
-
-clearInterval(t);
-
-ids.forEach(i=>{
-
-document.getElementById("c"+i).classList.remove("spinning");
-
-});
-
-resolve();
+resolve()
 
 }
 
-},80);
+},80)
 
-});
-
-}
-
-
-
-window.spin=async function(){
-
-await spinColumn(0);
-
-await spinColumn(1);
-
-await spinColumn(2);
+})
 
 }
 
+window.spin=async()=>{
+
+let bet=parseInt(betInput())
+
+if(money<bet){
+alert("Not enough money")
+return
+}
+
+money-=bet
+jackpot+=Math.floor(bet*0.2)
+
+updateMoney()
+
+await spinColumn(0)
+await spinColumn(1)
+await spinColumn(2)
+
+checkWin(bet)
+
+}
+
+function betInput(){
+return document.getElementById("bet").value
+}
+
+function updateMoney(){
+
+document.getElementById("money").innerText=money
+document.getElementById("jackpot").innerText=jackpot
+
+}
+
+function checkWin(bet){
+
+for(let r=0;r<3;r++){
+
+let a=grid[r*3]
+let b=grid[r*3+1]
+let c=grid[r*3+2]
+
+if(a===b && b===c){
+
+if(a.includes("A")){
+
+let win=bet*20+jackpot
+money+=win
+jackpot=1000
+alert("JACKPOT +" + win)
+
+}else{
+
+let win=bet*5
+money+=win
+alert("WIN +" + win)
+
+}
+
+}
+
+}
+
+updateMoney()
+
+}
 
 </script>
 
