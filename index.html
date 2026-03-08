@@ -38,9 +38,20 @@ justify-content:center;
 font-size:30px;
 }
 
-.admin{
+table{
+margin:auto;
 margin-top:20px;
+border-collapse:collapse;
+}
+
+td,th{
+border:1px solid white;
+padding:6px 12px;
+}
+
+.admin{
 border:2px solid red;
+margin-top:20px;
 padding:10px;
 display:none;
 }
@@ -66,7 +77,8 @@ display:none;
 
 <div id="game" style="display:none">
 
-<h3>UID: <span id="uid"></span></h3>
+<h3>Email: <span id="userEmail"></span></h3>
+<h4>UID: <span id="uid"></span></h4>
 
 Money: $<span id="money">0</span>  
 Jackpot: $<span id="jackpot">1000</span>
@@ -95,18 +107,57 @@ Spin Count: <input id="spinCount" value="1" style="width:60px">
 
 </div>
 
+<h3>🎰 Bảng giải thưởng</h3>
+
+<table>
+
+<tr>
+<th>Kết quả</th>
+<th>Thưởng</th>
+</tr>
+
+<tr>
+<td>3 lá cùng giá trị</td>
+<td>x5</td>
+</tr>
+
+<tr>
+<td>3 lá cùng giá trị + cùng chất</td>
+<td>x20</td>
+</tr>
+
+<tr>
+<td>AAA cùng chất</td>
+<td>x100</td>
+</tr>
+
+</table>
+
+
+<h3>🏆 Top người chơi</h3>
+
+<table id="leaderboard">
+
+<tr>
+<th>Top</th>
+<th>Email</th>
+<th>Tiền</th>
+</tr>
+
+</table>
+
+
 <div class="admin" id="adminPanel">
 
 <h3>ADMIN PANEL</h3>
 
 User UID: <input id="targetUID">
-
 Amount: <input id="amount">
 
 <br>
 
-<button onclick="deposit()">Nạp tiền</button>
-<button onclick="withdraw()">Rút tiền</button>
+<button onclick="deposit()">Nạp</button>
+<button onclick="withdraw()">Rút</button>
 
 </div>
 
@@ -127,7 +178,8 @@ getDatabase,
 ref,
 set,
 get,
-update
+update,
+onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
@@ -144,9 +196,9 @@ measurementId: "G-V7RM6KZXVW"
 
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getDatabase(app);
+const app=initializeApp(firebaseConfig)
+const auth=getAuth(app)
+const db=getDatabase(app)
 
 let currentUser=null
 let money=0
@@ -172,39 +224,35 @@ document.getElementById("c"+i).innerText=grid[i]
 }
 
 function speak(text){
-
 let msg=new SpeechSynthesisUtterance(text)
 msg.lang="vi-VN"
-
 speechSynthesis.speak(msg)
-
 }
 
 window.register=()=>{
 
-let email=document.getElementById("email").value
-let password=document.getElementById("password").value
+let email=emailInput()
+let password=passwordInput()
 
 createUserWithEmailAndPassword(auth,email,password)
 
 .then(user=>{
 
 set(ref(db,"users/"+user.user.uid),{
-money:1000
+money:1000,
+email:email
 })
 
 alert("Register success")
 
 })
 
-.catch(e=>alert(e.message))
-
 }
 
 window.login=()=>{
 
-let email=document.getElementById("email").value
-let password=document.getElementById("password").value
+let email=emailInput()
+let password=passwordInput()
 
 signInWithEmailAndPassword(auth,email,password)
 
@@ -216,6 +264,7 @@ document.getElementById("auth").style.display="none"
 document.getElementById("game").style.display="block"
 
 document.getElementById("uid").innerText=currentUser.uid
+document.getElementById("userEmail").innerText=currentUser.email
 
 let data=await get(ref(db,"users/"+currentUser.uid))
 
@@ -227,18 +276,18 @@ if(currentUser.email==="admin@casino.com"){
 document.getElementById("adminPanel").style.display="block"
 }
 
-})
+loadLeaderboard()
 
-.catch(e=>alert(e.message))
+})
 
 }
 
-async function saveMoney(){
+function emailInput(){
+return document.getElementById("email").value
+}
 
-await update(ref(db,"users/"+currentUser.uid),{
-money:money
-})
-
+function passwordInput(){
+return document.getElementById("password").value
 }
 
 function updateMoney(){
@@ -298,11 +347,7 @@ return
 
 money-=total
 
-updateMoney()
-
 for(let i=0;i<spinCount;i++){
-
-jackpot+=Math.floor(bet*0.2)
 
 await spinColumn(0)
 await spinColumn(1)
@@ -320,48 +365,62 @@ saveMoney()
 
 function checkWin(bet){
 
-let winFound=false
-
 for(let r=0;r<3;r++){
 
 let a=grid[r*3]
 let b=grid[r*3+1]
 let c=grid[r*3+2]
 
-if(a===b && b===c){
+let v1=a[0]
+let v2=b[0]
+let v3=c[0]
 
-winFound=true
+let s1=a[1]
+let s2=b[1]
+let s3=c[1]
 
-if(a.includes("A")){
+if(v1===v2 && v2===v3){
 
-let win=bet*20+jackpot
+if(v1==="A" && s1===s2 && s2===s3){
 
+let win=bet*100
 money+=win
-jackpot=1000
+alert("ĐẠI JACKPOT "+win)
+speak("Đại jackpot "+win)
 
+}
+
+else if(s1===s2 && s2===s3){
+
+let win=bet*20
+money+=win
 alert("JACKPOT "+win)
-speak("Jackpot "+win+" đô")
+speak("Jackpot "+win)
 
-}else{
+}
+
+else{
 
 let win=bet*5
-
 money+=win
-
 alert("Win "+win)
-speak("Bạn thắng "+win+" đô")
+speak("Bạn thắng "+win)
 
 }
 
 }
 
-}
-
-if(!winFound){
-speak("Không trúng")
 }
 
 updateMoney()
+
+}
+
+async function saveMoney(){
+
+await update(ref(db,"users/"+currentUser.uid),{
+money:money
+})
 
 }
 
@@ -378,8 +437,6 @@ await update(ref(db,"users/"+uid),{
 money:newMoney
 })
 
-alert("Nạp thành công")
-
 }
 
 window.withdraw=async()=>{
@@ -395,7 +452,53 @@ await update(ref(db,"users/"+uid),{
 money:newMoney
 })
 
-alert("Rút thành công")
+}
+
+function loadLeaderboard(){
+
+onValue(ref(db,"users"),snapshot=>{
+
+let data=snapshot.val()
+
+let arr=[]
+
+for(let uid in data){
+
+arr.push({
+email:data[uid].email,
+money:data[uid].money
+})
+
+}
+
+arr.sort((a,b)=>b.money-a.money)
+
+let table=document.getElementById("leaderboard")
+
+table.innerHTML=`
+
+<tr>
+<th>Top</th>
+<th>Email</th>
+<th>Tiền</th>
+</tr>
+`
+
+arr.slice(0,10).forEach((p,i)=>{
+
+table.innerHTML+=`
+
+<tr>
+<td>${i+1}</td>
+<td>${p.email}</td>
+<td>${p.money}</td>
+</tr>
+
+`
+
+})
+
+})
 
 }
 
