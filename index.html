@@ -214,7 +214,8 @@ let data=await get(ref(db,"users/"+uid));
 
 money=data.val().money;
 
-document.getElementById("money").innerText="Money: "+money;
+document.getElementById("money").innerText =
+"Money: "+money+" | UID: "+uid;
 
 if(email=="admin@casino.com"){
 
