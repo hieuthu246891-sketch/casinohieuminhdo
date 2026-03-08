@@ -7,26 +7,34 @@
 <style>
 
 body{
-background:#0b0b0b;
+background:#111;
 color:white;
 font-family:Arial;
 text-align:center;
 }
 
 input,button{
-padding:10px;
-font-size:18px;
+padding:8px;
 margin:5px;
+font-size:16px;
 }
 
-.reel{
-display:inline-block;
-width:90px;
-height:90px;
-line-height:90px;
-font-size:60px;
+#grid{
+display:grid;
+grid-template-columns:repeat(3,80px);
+grid-gap:10px;
+justify-content:center;
+margin:20px;
+}
+
+.cell{
+width:80px;
+height:80px;
+font-size:50px;
 border:2px solid white;
-margin:5px;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
 .spin{
@@ -40,21 +48,18 @@ animation:spin 0.3s linear infinite;
 }
 
 #history{
-margin-top:20px;
-width:320px;
-margin-left:auto;
-margin-right:auto;
-background:#111;
-padding:10px;
-height:200px;
+width:300px;
+height:150px;
 overflow:auto;
-border:1px solid white;
-text-align:left;
+background:#222;
+margin:auto;
+padding:10px;
 }
 
 </style>
 
 </head>
+
 <body>
 
 <h1>🎰 Casino Slot</h1>
@@ -73,24 +78,44 @@ text-align:left;
 
 <h2 id="money">Money: 0</h2>
 
-Bet:
-<input id="bet" type="number" value="100" min="10" step="10">
-
-<br><br>
-
-<div>
-
-<div class="reel" id="r1">🂡</div>
-<div class="reel" id="r2">🂱</div>
-<div class="reel" id="r3">🃁</div>
-
-</div>
+Bet
+<input id="bet" type="number" value="100">
 
 <br>
 
-<button onclick="spin()">🎰 SPIN</button>
+<div id="grid">
+
+<div class="cell" id="c0"></div>
+<div class="cell" id="c1"></div>
+<div class="cell" id="c2"></div>
+
+<div class="cell" id="c3"></div>
+<div class="cell" id="c4"></div>
+<div class="cell" id="c5"></div>
+
+<div class="cell" id="c6"></div>
+<div class="cell" id="c7"></div>
+<div class="cell" id="c8"></div>
+
+</div>
+
+<button onclick="spin()">SPIN</button>
+
+<h3>History</h3>
 
 <div id="history"></div>
+
+<div id="admin" style="display:none">
+
+<h2>ADMIN PANEL</h2>
+
+<input id="uid" placeholder="User UID">
+
+<input id="addmoney" placeholder="Money">
+
+<button onclick="addMoney()">Add Money</button>
+
+</div>
 
 </div>
 
@@ -108,7 +133,8 @@ import {
 getDatabase,
 ref,
 set,
-get
+get,
+update
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
@@ -120,50 +146,59 @@ databaseURL: "https://casino-slot-ec289-default-rtdb.asia-southeast1.firebasedat
 projectId: "casino-slot-ec289",
 storageBucket: "casino-slot-ec289.firebasestorage.app",
 messagingSenderId: "191169506693",
-appId: "1:191169506693:web:18eae48ffff0922492e8ec",
-measurementId: "G-V7RM6KZXVW"
+appId: "1:191169506693:web:18eae48ffff0922492e8ec"
 
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+const app=initializeApp(firebaseConfig);
+
+const auth=getAuth(app);
+
+const db=getDatabase(app);
 
 let uid;
+
 let money=0;
 
 const cards=["🂡","🂱","🃁","🃑","🂮","🂭","🂫","🂪"];
 
-function addHistory(text){
+function history(t){
 
 let h=document.getElementById("history");
-h.innerHTML="<div>"+text+"</div>"+h.innerHTML;
+
+h.innerHTML="<div>"+t+"</div>"+h.innerHTML;
 
 }
 
 window.register=()=>{
 
-let email=document.getElementById("email").value;
-let pass=document.getElementById("password").value;
+let email=emailInput();
+
+let pass=passwordInput();
 
 createUserWithEmailAndPassword(auth,email,pass)
 
 .then(user=>{
 
 set(ref(db,"users/"+user.user.uid),{
+
 money:1000
+
 });
 
 alert("Register success");
 
-});
+})
 
-};
+.catch(e=>alert(e.message));
+
+}
 
 window.login=()=>{
 
-let email=document.getElementById("email").value;
-let pass=document.getElementById("password").value;
+let email=emailInput();
+
+let pass=passwordInput();
 
 signInWithEmailAndPassword(auth,email,pass)
 
@@ -172,6 +207,7 @@ signInWithEmailAndPassword(auth,email,pass)
 uid=user.user.uid;
 
 document.getElementById("login").style.display="none";
+
 document.getElementById("game").style.display="block";
 
 let data=await get(ref(db,"users/"+uid));
@@ -180,11 +216,29 @@ money=data.val().money;
 
 document.getElementById("money").innerText="Money: "+money;
 
+if(email=="admin@casino.com"){
+
+document.getElementById("admin").style.display="block";
+
+}
+
 })
 
-.catch(()=>alert("Login fail"));
+.catch(e=>alert(e.message));
 
-};
+}
+
+function emailInput(){
+
+return document.getElementById("email").value;
+
+}
+
+function passwordInput(){
+
+return document.getElementById("password").value;
+
+}
 
 window.spin=()=>{
 
@@ -200,65 +254,93 @@ return;
 
 money-=bet;
 
-document.getElementById("money").innerText="Money: "+money;
+let result=[];
 
-let r1=document.getElementById("r1");
-let r2=document.getElementById("r2");
-let r3=document.getElementById("r3");
+for(let i=0;i<9;i++){
 
-r1.classList.add("spin");
-r2.classList.add("spin");
-r3.classList.add("spin");
+document.getElementById("c"+i).classList.add("spin");
+
+}
 
 setTimeout(()=>{
 
-r1.classList.remove("spin");
-r2.classList.remove("spin");
-r3.classList.remove("spin");
+for(let i=0;i<9;i++){
 
-let c1=cards[Math.floor(Math.random()*cards.length)];
-let c2=cards[Math.floor(Math.random()*cards.length)];
-let c3=cards[Math.floor(Math.random()*cards.length)];
+let c=cards[Math.floor(Math.random()*cards.length)];
 
-r1.innerText=c1;
-r2.innerText=c2;
-r3.innerText=c3;
+document.getElementById("c"+i).innerText=c;
 
-if(c1==c2 && c2==c3){
+document.getElementById("c"+i).classList.remove("spin");
 
-let win=bet*20;
-
-money+=win;
-
-addHistory("👑 JACKPOT +"+win);
-
-alert("JACKPOT x20");
+result.push(c);
 
 }
 
-else if(c1==c2 || c2==c3 || c1==c3){
-
-let win=bet*10;
-
-money+=win;
-
-addHistory("💰 WIN +"+win);
-
-}
-
-else{
-
-addHistory("❌ Lose -"+bet);
-
-}
+checkWin(result,bet);
 
 document.getElementById("money").innerText="Money: "+money;
 
 set(ref(db,"users/"+uid+"/money"),money);
 
-},1500);
+},1200);
 
-};
+}
+
+function checkWin(r,bet){
+
+let win=0;
+
+if(r[0]==r[1]&&r[1]==r[2])win+=bet*10;
+if(r[3]==r[4]&&r[4]==r[5])win+=bet*10;
+if(r[6]==r[7]&&r[7]==r[8])win+=bet*10;
+
+if(r[0]==r[3]&&r[3]==r[6])win+=bet*10;
+if(r[1]==r[4]&&r[4]==r[7])win+=bet*10;
+if(r[2]==r[5]&&r[5]==r[8])win+=bet*10;
+
+if(win>=bet*30){
+
+win=bet*20;
+
+history("👑 JACKPOT +"+win);
+
+}
+
+else if(win>0){
+
+history("💰 WIN +"+win);
+
+}
+
+else{
+
+history("❌ Lose -"+bet);
+
+}
+
+money+=win;
+
+}
+
+window.addMoney=async()=>{
+
+let id=document.getElementById("uid").value;
+
+let add=parseInt(document.getElementById("addmoney").value);
+
+let data=await get(ref(db,"users/"+id));
+
+let m=data.val().money+add;
+
+update(ref(db,"users/"+id),{
+
+money:m
+
+});
+
+alert("Added");
+
+}
 
 </script>
 
