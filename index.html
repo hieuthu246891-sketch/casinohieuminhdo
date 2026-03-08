@@ -246,20 +246,82 @@ window.spin=()=>{
 let bet=parseInt(document.getElementById("bet").value);
 
 if(bet>money){
-
 alert("Not enough money");
-
 return;
-
 }
 
 money-=bet;
 
 let result=[];
 
-for(let i=0;i<9;i++){
+/* quay cột 1 */
 
-document.getElementById("c"+i).classList.add("spin");
+let spin1=setInterval(()=>{
+
+for(let i of [0,3,6]){
+
+let c=cards[Math.floor(Math.random()*cards.length)];
+document.getElementById("c"+i).innerText=c;
+
+}
+
+},80);
+
+setTimeout(()=>{
+
+clearInterval(spin1);
+
+/* quay cột 2 */
+
+let spin2=setInterval(()=>{
+
+for(let i of [1,4,7]){
+
+let c=cards[Math.floor(Math.random()*cards.length)];
+document.getElementById("c"+i).innerText=c;
+
+}
+
+},80);
+
+setTimeout(()=>{
+
+clearInterval(spin2);
+
+/* quay cột 3 */
+
+let spin3=setInterval(()=>{
+
+for(let i of [2,5,8]){
+
+let c=cards[Math.floor(Math.random()*cards.length)];
+document.getElementById("c"+i).innerText=c;
+
+}
+
+},80);
+
+setTimeout(()=>{
+
+clearInterval(spin3);
+
+/* lấy kết quả */
+
+for(let i=0;i<9;i++){
+result.push(document.getElementById("c"+i).innerText);
+}
+
+checkWin(result,bet);
+
+document.getElementById("money").innerText="Money: "+money;
+
+set(ref(db,"users/"+uid+"/money"),money);
+
+},1000);
+
+},700);
+
+},700);
 
 }
 
